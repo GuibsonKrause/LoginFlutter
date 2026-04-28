@@ -1,19 +1,17 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/routes/app_routes.dart';
+
 class HomePage extends StatelessWidget {
-  const HomePage({
-    super.key,
-    required this.email,
-  });
+  const HomePage({super.key, required this.email});
 
   final String email;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Usuario Logado'),
-      ),
+      appBar: AppBar(title: const Text('Usuario Logado')),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -23,10 +21,7 @@ class HomePage extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.person,
-                    size: 64,
-                  ),
+                  const Icon(Icons.person, size: 64),
                   const SizedBox(height: 16),
                   Text(
                     'Login realizado com sucesso!',
@@ -34,9 +29,22 @@ class HomePage extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 12),
-                  Text(
-                    'E-mail logado: $email',
-                    textAlign: TextAlign.center,
+                  Text('E-mail logado: $email', textAlign: TextAlign.center),
+                  const SizedBox(height: 24),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      await FirebaseAuth.instance.signOut();
+
+                      if (!context.mounted) {
+                        return;
+                      }
+
+                      Navigator.of(
+                        context,
+                      ).pushReplacementNamed(AppRoutes.login);
+                    },
+                    icon: const Icon(Icons.logout),
+                    label: const Text('Sair'),
                   ),
                 ],
               ),

@@ -3,6 +3,11 @@
 *.log
 *.pyc
 *.swp
+.env
+.env.local
+.env.*.local
+.packages
+.fvm/flutter_sdk
 .DS_Store
 .atom/
 .build/
@@ -28,6 +33,7 @@ migrate_working_dir/
 **/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins-dependencies
+.plugin_symlinks/
 .pub-cache/
 .pub/
 /build/
@@ -43,3 +49,27 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Android local files
+/android/local.properties
+/android/key.properties
+*.jks
+*.keystore
+
+# iOS/macOS local files
+**/Flutter/ephemeral/
+**/Pods/
+**/.symlinks/
+**/Flutter/Flutter.podspec
+**/Flutter/Generated.xcconfig
+**/Flutter/flutter_export_environment.sh
+
+# Web/generated local files
+/web/flutter_bootstrap.js
+
+# Firebase local/emulator files
+.firebase/
+firebase-debug.log
+firestore-debug.log
+database-debug.log
+ui-debug.log
