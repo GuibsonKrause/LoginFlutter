@@ -33,6 +33,8 @@ class HomePage extends StatelessWidget {
                   const SizedBox(height: 24),
                   OutlinedButton.icon(
                     onPressed: () async {
+                      // signOut remove a sessao local do Firebase Auth.
+                      // Depois disso, currentUser volta a ser null.
                       await FirebaseAuth.instance.signOut();
 
                       if (!context.mounted) {

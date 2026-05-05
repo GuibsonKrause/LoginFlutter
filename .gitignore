@@ -68,6 +68,7 @@ app.*.map.json
 /web/flutter_bootstrap.js
 
 # Firebase local/emulator files
+lib/firebase_options.dart
 .firebase/
 firebase-debug.log
 firestore-debug.log

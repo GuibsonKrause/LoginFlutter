@@ -3,33 +3,37 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/routes/app_routes.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   static final _emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
   bool _isLoading = false;
-  bool _isResettingPassword = false;
   bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
 
   @override
   void dispose() {
+    // Controllers guardam os textos digitados nos campos. Ao sair da tela,
+    // liberamos esses objetos da memoria.
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> _login() async {
-    // Primeiro validamos o formulario. Assim evitamos chamar o Firebase
-    // com e-mail vazio, senha curta ou dados em formato invalido.
+  Future<void> _register() async {
+    // Validacao local: antes de falar com o Firebase, garantimos que os
+    // campos fazem sentido para o cadastro.
     final isValid = _formKey.currentState?.validate() ?? false;
 
     if (!isValid) {
@@ -43,9 +47,9 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      // signInWithEmailAndPassword pede para o Firebase Auth verificar
-      // se ja existe uma conta com este e-mail e se a senha esta correta.
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      // createUserWithEmailAndPassword cria uma nova conta no Firebase Auth.
+      // Se der certo, o Firebase tambem deixa esse usuario logado no app.
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: _passwordController.text,
       );
@@ -70,90 +74,34 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
+    // Depois do cadastro, levamos o usuario para a Home usando o e-mail
+    // que acabou de ser criado.
     Navigator.of(
       context,
     ).pushReplacementNamed(AppRoutes.home, arguments: email);
   }
 
-  Future<void> _resetPassword() async {
-    final email = _emailController.text.trim();
-
-    if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Informe o e-mail para recuperar a senha.'),
-        ),
-      );
-      return;
-    }
-
-    if (!_emailRegex.hasMatch(email)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Digite um e-mail valido para recuperar a senha.'),
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      _isResettingPassword = true;
-    });
-
-    try {
-      // O Firebase envia um e-mail de redefinicao para o usuario.
-      // Essa funcao so precisa do endereco de e-mail cadastrado.
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-    } on FirebaseAuthException catch (error) {
-      if (!mounted) {
-        return;
-      }
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(_getAuthErrorMessage(error.code))));
-      return;
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isResettingPassword = false;
-        });
-      }
-    }
-
-    if (!mounted) {
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Enviamos um link de recuperacao para $email.')),
-    );
-  }
-
   String _getAuthErrorMessage(String code) {
     switch (code) {
+      case 'email-already-in-use':
+        return 'Ja existe uma conta cadastrada com este e-mail.';
       case 'invalid-email':
         return 'O e-mail informado nao e valido.';
-      case 'user-disabled':
-        return 'Este usuario foi desativado.';
-      case 'user-not-found':
-        return 'Nao existe usuario cadastrado com este e-mail.';
-      case 'wrong-password':
-      case 'invalid-credential':
-        return 'E-mail ou senha incorretos.';
-      case 'too-many-requests':
-        return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
+      case 'operation-not-allowed':
+        return 'Cadastro por e-mail e senha nao esta habilitado no Firebase.';
+      case 'weak-password':
+        return 'A senha e fraca. Use pelo menos 6 caracteres.';
       case 'network-request-failed':
         return 'Falha de conexao. Verifique a internet.';
       default:
-        return 'Nao foi possivel concluir a operacao. Tente novamente.';
+        return 'Nao foi possivel criar o usuario. Tente novamente.';
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
+      appBar: AppBar(title: const Text('Cadastrar usuario')),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -165,17 +113,17 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(Icons.lock, size: 56),
+                  const Icon(Icons.person_add, size: 56),
                   const SizedBox(height: 16),
                   Text(
-                    'Escolha entrar com uma conta existente ou criar um novo usuario.',
+                    'Crie uma conta usando e-mail e senha.',
                     style: Theme.of(context).textTheme.titleMedium,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
                   TextFormField(
                     controller: _emailController,
-                    enabled: !_isLoading && !_isResettingPassword,
+                    enabled: !_isLoading,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
@@ -200,18 +148,19 @@ class _LoginPageState extends State<LoginPage> {
                   TextFormField(
                     controller: _passwordController,
                     obscureText: !_isPasswordVisible,
-                    enabled: !_isLoading && !_isResettingPassword,
-                    textInputAction: TextInputAction.done,
-                    onFieldSubmitted: (_) => _login(),
+                    enabled: !_isLoading,
+                    textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
                       labelText: 'Senha',
                       hintText: 'Minimo de 6 caracteres',
                       suffixIcon: IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _isPasswordVisible = !_isPasswordVisible;
-                          });
-                        },
+                        onPressed: _isLoading
+                            ? null
+                            : () {
+                                setState(() {
+                                  _isPasswordVisible = !_isPasswordVisible;
+                                });
+                              },
                         icon: Icon(
                           _isPasswordVisible
                               ? Icons.visibility
@@ -233,41 +182,65 @@ class _LoginPageState extends State<LoginPage> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 24),
-                  FilledButton(
-                    onPressed: _isLoading || _isResettingPassword
-                        ? null
-                        : _login,
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 3),
-                          )
-                        : const Text('Entrar'),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _confirmPasswordController,
+                    obscureText: !_isConfirmPasswordVisible,
+                    enabled: !_isLoading,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _register(),
+                    decoration: InputDecoration(
+                      labelText: 'Confirmar senha',
+                      suffixIcon: IconButton(
+                        onPressed: _isLoading
+                            ? null
+                            : () {
+                                setState(() {
+                                  _isConfirmPasswordVisible =
+                                      !_isConfirmPasswordVisible;
+                                });
+                              },
+                        icon: Icon(
+                          _isConfirmPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                      ),
+                    ),
+                    validator: (value) {
+                      final confirmPassword = value ?? '';
+
+                      if (confirmPassword.isEmpty) {
+                        return 'Confirme a senha.';
+                      }
+
+                      if (confirmPassword != _passwordController.text) {
+                        return 'As senhas precisam ser iguais.';
+                      }
+
+                      return null;
+                    },
                   ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: _isLoading || _isResettingPassword
-                        ? null
-                        : _resetPassword,
-                    child: _isResettingPassword
+                  const SizedBox(height: 24),
+                  FilledButton.icon(
+                    onPressed: _isLoading ? null : _register,
+                    icon: _isLoading
                         ? const SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2.5),
                           )
-                        : const Text('Esqueci minha senha'),
+                        : const Icon(Icons.check),
+                    label: const Text('Criar conta'),
                   ),
                   const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: _isLoading || _isResettingPassword
+                  TextButton(
+                    onPressed: _isLoading
                         ? null
                         : () {
-                            Navigator.of(context).pushNamed(AppRoutes.register);
+                            Navigator.of(context).pop();
                           },
-                    icon: const Icon(Icons.person_add),
-                    label: const Text('Cadastrar novo usuario'),
+                    child: const Text('Ja tenho uma conta'),
                   ),
                 ],
               ),

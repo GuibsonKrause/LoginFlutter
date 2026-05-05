@@ -1,10 +1,9 @@
 class AppRoutes {
   const AppRoutes._();
 
-  // ===== INICIO DO CODIGO NOVO =====
-  // Guarda em uma constante o nome da rota da tela de login.
+  // Centralizamos os nomes das rotas para evitar digitar strings soltas
+  // em varias partes do app.
   static const String login = '/';
-  // Guarda em uma constante o nome da rota da tela inicial do usuario logado.
+  static const String register = '/register';
   static const String home = '/home';
-  // ===== FIM DO CODIGO NOVO =====
 }
