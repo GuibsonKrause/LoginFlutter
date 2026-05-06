@@ -32,6 +32,7 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
 .plugin_symlinks/
 .pub-cache/
@@ -49,6 +50,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/.gradle/
+/android/.kotlin/
+/android/build/
+/android/app/build/
 
 # Android local files
 /android/local.properties
@@ -58,17 +63,29 @@ app.*.map.json
 
 # iOS/macOS local files
 **/Flutter/ephemeral/
+**/flutter/ephemeral/
 **/Pods/
 **/.symlinks/
 **/Flutter/Flutter.podspec
 **/Flutter/Generated.xcconfig
 **/Flutter/flutter_export_environment.sh
+**/Flutter/app.flx
+**/Flutter/app.zip
+**/Flutter/flutter_assets/
+**/ServiceDefinitions.json
+**/xcuserdata/
+**/*.xcuserstate
 
 # Web/generated local files
 /web/flutter_bootstrap.js
+/web/flutter_service_worker.js
 
 # Firebase local/emulator files
 lib/firebase_options.dart
+/android/app/google-services.json
+/ios/Runner/GoogleService-Info.plist
+/macos/Runner/GoogleService-Info.plist
+firebase.json
 .firebase/
 firebase-debug.log
 firestore-debug.log
